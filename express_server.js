@@ -5,6 +5,7 @@ app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+// object holding static and generated urls and their shortlinks
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xk": "http://www.google.com",
@@ -34,8 +35,8 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   console.log(req.body.longURL);
-  const newString = generateRandomString();
-  urlDatabase[newString] = (req.body.longURL)
+  const newString = generateRandomString(); // generates a new string ID
+  urlDatabase[newString] = (req.body.longURL) // assigns a new value to freshly created string
   res.redirect(`/urls/${newString}`);         // Redirect to newly created string page.
 });
 
