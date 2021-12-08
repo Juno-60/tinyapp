@@ -27,8 +27,8 @@
             <td><%= url %></td>
             <td><%= urls[url] %></td>      
             <td>              
-              <form method="POST" action="/urls/<%= url %>/edit"> <!--edits referenced url-->
-                <button type="button" class="btn btn-secondary">edit</button>
+              <form method="GET" action="/urls/<%= url %>"> <!--edits referenced url-->
+                <button type="submit" class="btn btn-secondary">edit</button>
               </form>
             </td>
             <td>

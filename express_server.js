@@ -9,6 +9,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xk": "http://www.google.com",
+
 };
 
 function generateRandomString() {
@@ -60,6 +61,15 @@ app.get('/hello', (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.post("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL; // references the value of the key :shortURL
+  const longURL = req.body.longURL; // body.longURL is the NAME of the FORM in urls_show
+  urlDatabase[shortURL] = longURL;  // replaces object value based on key
+  res.redirect(`/urls`) // redirects after 
+});
+
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
