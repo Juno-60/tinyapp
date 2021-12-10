@@ -1,6 +1,6 @@
-//-----------------
-// ALL REQUIREMENTS 
-//-----------------
+/*-------------------
+ ALL REQUIREMENTS 
+--------------------*/
 
 const express = require("express");
 const app = express();
@@ -62,28 +62,36 @@ app.get('/', (req, res) => {
   res.send("Hello!");
 });
 
-// registration page
+// register page
 app.get('/register', (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]],
-  };
-  res.render("register", templateVars)
+  if (!req.cookies["user_id"]) {
+    const templateVars = {
+      user: users[req.cookies["user_id"]],
+    };
+    res.render("register", templateVars)
+  } else {
+    res.redirect('/urls');
+  }
 });
 
 // login page
 app.get('/login', (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]],
-  };
-  res.render("login", templateVars)
-})
+  if (!req.cookies["user_id"]) {
+    const templateVars = {
+      user: users[req.cookies["user_id"]],
+    };
+    res.render("login", templateVars)
+  } else {
+    res.redirect('/urls');
+  }
+});
 
 // json database of all created and hard coded urls
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
-// Page that renders all existing URLs
+// URLs page, renders all existing urls
 app.get("/urls", (req, res) => {
   const templateVars = { 
     urls: urlDatabase,
@@ -92,12 +100,16 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars)
 });
 
-// page for creating new URLs
+// new url creation page
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    res.redirect('/login');
+  } else {
   const templateVars = {
     user: users[req.cookies["user_id"]],
   }
   res.render("urls_new", templateVars);
+}
 });
 
 // results page of newly created string. ":shortURL is an express variable."
@@ -121,11 +133,15 @@ app.get("/u/:shortURL", (req, res) => {
 //POST ENDPOINTS
 //--------------
 
-// - makes a post request to /urls using the input body longURL from new url page.
+// - creates a new URL
 app.post("/urls", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    res.status(403).send("Cannot create new URL unless signed in!")
+  } else {
   const newString = generateRandomString();   // generates a new string ID
   urlDatabase[newString] = (req.body.longURL) // assigns a new value to freshly created string
   res.redirect(`/urls/${newString}`);         // Redirect to newly created string page.
+  }
 });
 
 // - makes a post request for deletion of assigned :shortURL variable
@@ -136,7 +152,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect('/urls');
 });
 
-// 
+// basically just the urls_show page's editor feature
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; // references the value of the key :shortURL
   const longURL = req.body.longURL; // body.longURL is the NAME of the FORM in urls_show
@@ -146,7 +162,7 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // register a new user, with checks for existing accounts and form completion
 app.post("/register", (req, res) => {
-  const userKey = emailLookup(req.body.email, users);
+  const userKey = emailLookup(req.body.email);
   const userId = generateRandomString();
   if (req.body.email && req.body.password ) {
     if (userKey.email !== req.body.email) {
@@ -158,37 +174,36 @@ app.post("/register", (req, res) => {
       res.cookie('user_id', userId);
       res.redirect('/urls');
     } else {
-      res.status(400)
-      res.send("That email address is already registered!")
+      res.status(400).send("That email address is already registered!");
     }
   } else {
-      res.status(400);
-      res.send("Username or Password fields cannot be empty!")
-    }
+    res.status(400).send("Username or Password fields cannot be empty!");
+  }
 });
 
+// login page with checks for username and password
 app.post("/login", (req, res) => {
-  const userKey = emailLookup(req.body.email, users);
+  const userKey = emailLookup(req.body.email);
   if (req.body.email && req.body.password) {
     if (userKey.email === req.body.email) {
       if (userKey.password === req.body.password) {
         res.cookie('user_id', userKey.id)
         res.redirect('/urls');
       } else {
-        res.status(403)
-        res.send("Incorrect Password.");
+        res.status(403).send("Incorrect Password.");
       }
     } else {
-      res.status(403)
-      res.send("That account does not exist!")
+      res.status(403).send("That account does not exist!")
     }
   }
 });
 
+// logout page
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/urls');
 })
+
 //---------------
 // STATUS CHECKER
 //---------------
