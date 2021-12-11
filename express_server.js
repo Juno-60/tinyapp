@@ -5,6 +5,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const bcrypt = require("bcryptjs");
 const cookieParser = require('cookie-parser');
 app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
@@ -213,12 +214,16 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/register", (req, res) => {
   const userKey = emailLookup(req.body.email);
   const userId = generateRandomString();
+  // check if both fields are filled adequately
   if (req.body.email && req.body.password ) {
+    // takes password form body to make a hashed password
+    const hashedPassword = bcrypt.hashSync(req.body.password, 10)
+    // check if account already exists. if not, creates user object
     if (userKey.email !== req.body.email) {
       users[userId] = {
         id: userId,
         email: req.body.email,
-        password: req.body.password,
+        password: hashedPassword, //req.body.password (OLD)
       };
       res.cookie('user_id', userId);
       res.redirect('/urls');
@@ -233,9 +238,11 @@ app.post("/register", (req, res) => {
 // login page with checks for username and password
 app.post("/login", (req, res) => {
   const userKey = emailLookup(req.body.email);
+  console.log(bcrypt.compareSync(req.body.password, userKey.password));
+  console.log(userKey.password)
   if (req.body.email && req.body.password) {
     if (userKey.email === req.body.email) {
-      if (userKey.password === req.body.password) {
+      if (bcrypt.compareSync(req.body.password, userKey.password))/*(userKey.password === req.body.password) OLD*/ {
         res.cookie('user_id', userKey.id)
         res.redirect('/urls');
       } else {
