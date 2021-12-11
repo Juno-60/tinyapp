@@ -16,16 +16,16 @@
         <div>
           <form method="POST" action="/logout"> <!--Logs ya out-->
             <button class="btn btn-primary float-right">Logout</button>
+          </form>
         </div>
       <% } else { %>
-    <div class="collapse navbar-collapse justify-content-end" id="navbarRightSide">
-      <div class="navbar-nav">
-        <a class="nav-item nav-link" href="/login">Login</a>
-        <a class="nav-item nav-link" href="/register">Register</a>
-      </div>
-    </div>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarRightSide">
+          <div class="navbar-nav">
+            <a class="nav-item nav-link" href="/login">Login</a>
+            <a class="nav-item nav-link" href="/register">Register</a>
+          </div>
+        </div>
       <% } %>
-
       <!-- </div>
         <form class="form-inline justify-content-end" action="/login" method="POST">
           <div class="form-group mb-2">
@@ -33,6 +33,5 @@
             <button type="submit" class="btn btn-primary">Login</button>
           </div>
         </form> -->
-    
   </nav>
 </header>

@@ -29,14 +29,32 @@ function emailLookup(inputEmail) {
   } return false;
 };
 
+// returns urls for which the userID is equal to the ID of currently logged in user
+function urlsForUser(id) {
+  let urlsById = {};
+  for (url in urlDatabase) {
+    if (urlDatabase[url].userId === id) {
+      urlsById[url] = urlDatabase[url];
+    } 
+  } 
+  return urlsById;
+}
+
 //-----------------
 // DATABASE OBJECTS
 //-----------------
 
 // object holding static and generated urls and their shortlinks
+// urlDatabase[shortURL][key]
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xk": "http://www.google.com",
+  "b2xVn2": {
+    fullURL: "http://www.lighthouselabs.ca",
+    userId: "18230"
+  },
+  "9sm5xk": {
+    fullURL: "http://www.google.com",
+    userId: "18230"
+  },
 };
 
 // holds all the users.
@@ -59,12 +77,12 @@ const users = {
 
 // main index page
 app.get('/', (req, res) => {
-  res.send("Hello!");
+  res.redirect('/urls')
 });
 
 // register page
 app.get('/register', (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!users[req.cookies["user_id"]]) {
     const templateVars = {
       user: users[req.cookies["user_id"]],
     };
@@ -76,7 +94,7 @@ app.get('/register', (req, res) => {
 
 // login page
 app.get('/login', (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!users[req.cookies["user_id"]]) {
     const templateVars = {
       user: users[req.cookies["user_id"]],
     };
@@ -94,7 +112,7 @@ app.get('/urls.json', (req, res) => {
 // URLs page, renders all existing urls
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies["user_id"]),
     user: users[req.cookies["user_id"]],
    };
   res.render("urls_index", templateVars)
@@ -102,7 +120,7 @@ app.get("/urls", (req, res) => {
 
 // new url creation page
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!users[req.cookies["user_id"]]) {
     res.redirect('/login');
   } else {
   const templateVars = {
@@ -112,52 +130,83 @@ app.get("/urls/new", (req, res) => {
 }
 });
 
-// results page of newly created string. ":shortURL is an express variable."
+// urls_show page for individual URLs, with editor feature
 app.get("/urls/:shortURL", (req, res) => {
   // allows these objects to be accessible in HTML template
-  const templateVars = { 
-    shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL],
-    user: users[req.cookies["user_id"]],
-  };
-  res.render("urls_show", templateVars);
+  console.log(req.params.shortURL);
+  const url = urlDatabase[req.params.shortURL];
+  if (url) {
+    const templateVars = { 
+      shortURL: req.params.shortURL, 
+      longURL: (url.fullURL),
+      user: users[req.cookies["user_id"]],
+    };
+      res.render("urls_show", templateVars);
+    } else {
+      res.status(404).send("That URL does not exist!");
+    }
 });
 
 // sends link off on its way to the wilderness
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]; // references value of newly generated key
-  res.redirect(longURL); // redirects to that key, duh
+  const url = urlDatabase[req.params.shortURL];
+  if (url) {
+    // references value of newly generated key
+    const longURL = urlDatabase[req.params.shortURL].fullURL; 
+    res.redirect(longURL);
+  } else {
+    res.status(404).send("That URL does not exist!");
+  }
 });
 
 //--------------
 //POST ENDPOINTS
 //--------------
 
-// - creates a new URL
+// create a new URL
 app.post("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
     res.status(403).send("Cannot create new URL unless signed in!")
   } else {
-  const newString = generateRandomString();   // generates a new string ID
-  urlDatabase[newString] = (req.body.longURL) // assigns a new value to freshly created string
-  res.redirect(`/urls/${newString}`);         // Redirect to newly created string page.
-  }
+      const newString = generateRandomString();
+      // generates a key for an empty object to be placed inside urlDatabase
+      urlDatabase[newString] = {};
+      // assigns the shortURL object's fullURL property the value of the longURL form
+      urlDatabase[newString].fullURL = (req.body.longURL)
+      // assigns the shortURL object the currently signed in user's ID
+      urlDatabase[newString].userId = req.cookies["user_id"]
+      res.redirect(`/urls/${newString}`);
+    }
 });
 
-// - makes a post request for deletion of assigned :shortURL variable
+// deletes a url if conditions are met
 app.post("/urls/:shortURL/delete", (req, res) => {
-  // req.params references the shortURL in the path of the URL
-  delete urlDatabase[req.params.shortURL];
-  // then redirects to main url list page
-  res.redirect('/urls');
+  const signedInUser = users[req.cookies["user_id"]];
+  // checks that a user cookie exists, and it matches the userid value of the url being deleted
+  if (signedInUser && signedInUser.id === urlDatabase[req.params.shortURL].userId) {
+    // req.params references the shortURL in the path of the URL
+    delete urlDatabase[req.params.shortURL];
+    // then redirects to main url list page
+    res.redirect('/urls');
+  } else {
+      res.status(403).send("Cannot delete a URL that isn't your own!")
+    }
 });
 
-// basically just the urls_show page's editor feature
+// edit an existing URL
 app.post("/urls/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL; // references the value of the key :shortURL
-  const longURL = req.body.longURL; // body.longURL is the NAME of the FORM in urls_show
-  urlDatabase[shortURL] = longURL;  // replaces object value based on key
-  res.redirect(`/urls`) // redirects after 
+  const signedInUser = users[req.cookies["user_id"]];
+  // references the value of the key :shortURL
+  const shortURL = req.params.shortURL;
+  // assigns variable the long url from the form in urls_show
+  const longURL = req.body.longURL;
+  // replaces database object value with the longurl from the form
+  if (signedInUser && signedInUser.id === urlDatabase[req.params.shortURL].userId) {
+    urlDatabase[shortURL].fullURL = longURL;
+    res.redirect(`/urls`)
+  } else {
+    res.status(403).send("Cannot edit a URL that isn't your own!")
+  }
 });
 
 // register a new user, with checks for existing accounts and form completion
