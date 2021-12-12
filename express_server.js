@@ -41,7 +41,6 @@ function urlsForUser(id) {
   return urlsById;
 }
 
-
 //-----------------
 // DATABASE OBJECTS
 //-----------------
@@ -60,6 +59,7 @@ const urlDatabase = {
 };
 
 // holds all the users.
+// users[userID][key]
 const users = {
   "18230": {
     id: "18230",
@@ -85,10 +85,8 @@ app.get('/', (req, res) => {
 // register page
 app.get('/register', (req, res) => {
   if (!users[req.session.user_id]) {
-  // if (!users[req.cookies["user_id"]]) {
     const templateVars = {
       user: users[req.session.user_id],
-      // user: users[req.cookies["user_id"]],
     };
     res.render("register", templateVars)
   } else {
@@ -99,10 +97,8 @@ app.get('/register', (req, res) => {
 // login page
 app.get('/login', (req, res) => {
   if (!users[req.session.user_id]) {
-  // if (!users[req.cookies["user_id"]]) {
     const templateVars = {
       user: users[req.session.user_id],
-      // user: users[req.cookies["user_id"]], 
     };
     res.render("login", templateVars)
   } else {
@@ -120,8 +116,6 @@ app.get("/urls", (req, res) => {
   const templateVars = { 
     urls: urlsForUser(req.session.user_id),
     user: users[req.session.user_id],
-    // urls: urlsForUser(req.cookies["user_id"]),
-    // user: users[req.cookies["user_id"]],
    };
   res.render("urls_index", templateVars)
 });
@@ -129,12 +123,10 @@ app.get("/urls", (req, res) => {
 // new url creation page
 app.get("/urls/new", (req, res) => {
   if (!users[req.session.user_id]) {
-  // if (!users[req.cookies["user_id"]]) {
     res.redirect('/login');
   } else {
   const templateVars = {
     user: users[req.session.user_id],
-    // user: users[req.cookies["user_id"]],
   }
   res.render("urls_new", templateVars);
 }
@@ -143,14 +135,12 @@ app.get("/urls/new", (req, res) => {
 // urls_show page for individual URLs, with editor feature
 app.get("/urls/:shortURL", (req, res) => {
   // allows these objects to be accessible in HTML template
-  console.log(req.params.shortURL);
   const url = urlDatabase[req.params.shortURL];
   if (url) {
     const templateVars = { 
       shortURL: req.params.shortURL, 
       longURL: (url.fullURL),
       user: users[req.session.user_id],
-      // user: users[req.cookies["user_id"]],
     };
       res.render("urls_show", templateVars);
     } else {
@@ -177,7 +167,6 @@ app.get("/u/:shortURL", (req, res) => {
 // create a new URL
 app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
-  // if (!req.cookies["user_id"]) {
     res.status(403).send("Cannot create new URL unless signed in!")
   } else {
       const newString = generateRandomString();
@@ -187,7 +176,6 @@ app.post("/urls", (req, res) => {
       urlDatabase[newString].fullURL = (req.body.longURL)
       // assigns the shortURL object the currently signed in user's ID
       urlDatabase[newString].userId = req.session.user_id
-      // urlDatabase[newString].userId = req.cookies["user_id"]
       res.redirect(`/urls/${newString}`);
     }
 });
@@ -195,7 +183,6 @@ app.post("/urls", (req, res) => {
 // deletes a url if conditions are met
 app.post("/urls/:shortURL/delete", (req, res) => {
   const signedInUser = users[req.session.user_id];
-  // const signedInUser = users[req.cookies["user_id"]];
   // checks that a user cookie exists, and it matches the userid value of the url being deleted
   if (signedInUser && signedInUser.id === urlDatabase[req.params.shortURL].userId) {
     // req.params references the shortURL in the path of the URL
@@ -210,7 +197,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 // edit an existing URL
 app.post("/urls/:shortURL", (req, res) => {
   const signedInUser = users[req.session.user_id];
-  // const signedInUser = users[req.cookies["user_id"]];
   // references the value of the key :shortURL
   const shortURL = req.params.shortURL;
   // assigns variable the long url from the form in urls_show
@@ -237,10 +223,9 @@ app.post("/register", (req, res) => {
       users[userId] = {
         id: userId,
         email: req.body.email,
-        password: hashedPassword, //req.body.password (OLD)
+        password: hashedPassword,
       };
       req.session.user_id = userId;
-      // res.cookie('user_id', userId);
       res.redirect('/urls');
     } else {
       res.status(400).send("That email address is already registered!");
@@ -257,7 +242,6 @@ app.post("/login", (req, res) => {
     if (userKey.email === req.body.email) {
       if (bcrypt.compareSync(req.body.password, userKey.password))/*(userKey.password === req.body.password) OLD*/ {
         req.session.user_id = userKey.id;
-        // res.cookie('user_id', userKey.id)
         res.redirect('/urls');
       } else {
         res.status(403).send("Incorrect Password.");
@@ -271,7 +255,6 @@ app.post("/login", (req, res) => {
 // logout page
 app.post("/logout", (req, res) => {
   req.session = null;
-  // res.clearCookie('user_id');
   res.redirect('/urls');
 })
 
