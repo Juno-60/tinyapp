@@ -10,9 +10,9 @@ Some things to note:
 
 ## Final Product
 
-!["screenshot description"](#)
+!["/urls page when not logged in"](https://github.com/Juno-60/tinyapp/blob/master/docs/URLS-page-signed-out.png)
 
-!["screenshot description"](#)
+!["/urls page when signed in - with links!"](https://github.com/Juno-60/tinyapp/blob/master/docs/URLS-page-signed-in.png)
 
 ## Dependencies
 
