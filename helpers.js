@@ -1,4 +1,7 @@
-function emailLookup(inputEmail, database) {
+const emailLookup = function(inputEmail, database) {
+  if (!inputEmail) {
+    return undefined;
+  }
   for (let id in database) {
     if (database[id].email === inputEmail) {
       return database[id];
@@ -6,16 +9,6 @@ function emailLookup(inputEmail, database) {
   } return false;
 };
 
-//OLD (works)
-
-// function emailLookup(inputEmail) {
-//   for (const user in users) {
-//     if (users[user].email === inputEmail) {
-//       return users[user];
-//     } 
-//   } return false;
-// };
-
-module.exports = { 
+module.exports = {
   emailLookup,
-}
+};

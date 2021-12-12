@@ -10,13 +10,17 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
       <% if (user) {  %>
-        <div class="float-right">
-          Logged in as <%= user.email %> 
-        </div>
-        <div>
-          <form method="POST" action="/logout"> <!--Logs ya out-->
-            <button class="btn btn-primary float-right">Logout</button>
-          </form>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarRightSide">
+          <div class="float-right">
+            Logged in as <%= user.email %>
+          </div>
+          <div>
+          <div style='margin: 2px'>
+            <form method="POST" action="/logout"> <!--Logs ya out-->
+              <button class="btn btn-primary float-right">Logout</button>
+            </form>
+          </div>
+          </div>
         </div>
       <% } else { %>
         <div class="collapse navbar-collapse justify-content-end" id="navbarRightSide">

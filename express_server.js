@@ -1,5 +1,5 @@
 /*-------------------
- ALL REQUIREMENTS 
+ ALL REQUIREMENTS
 --------------------*/
 
 const express = require("express");
@@ -15,31 +15,29 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000
 }
 ));
-//const cookieParser = require('cookie-parser');
 app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
-//app.use(cookieParser());
 
 //-----------------
 // HELPER FUNCTIONS
 //-----------------
 
 // random number generator
-function generateRandomString() {
+const generateRandomString = function() {
   return Math.random().toString(36).substr(2, 6);
 };
 
 // returns urls for which the userID is equal to the ID of currently logged in user
-function urlsForUser(id) {
+const urlsForUser = function(id) {
   let urlsById = {};
-  for (url in urlDatabase) {
+  for (const url in urlDatabase) {
     if (urlDatabase[url].userId === id) {
       urlsById[url] = urlDatabase[url];
-    } 
-  } 
+    }
+  }
   return urlsById;
-}
+};
 
 //-----------------
 // DATABASE OBJECTS
@@ -47,31 +45,11 @@ function urlsForUser(id) {
 
 // object holding static and generated urls and their shortlinks
 // urlDatabase[shortURL][key]
-const urlDatabase = {
-  "b2xVn2": {
-    fullURL: "http://www.lighthouselabs.ca",
-    userId: "18230"
-  },
-  "9sm5xk": {
-    fullURL: "http://www.google.com",
-    userId: "18230"
-  },
-};
+const urlDatabase = {};
 
 // holds all the users.
 // users[userID][key]
-const users = {
-  "18230": {
-    id: "18230",
-    email: "tom@scotland.gov",
-    password: "cat",
-  },
-  "2205": {
-    id: "2205",
-    email: "jason@njb.net",
-    password: "lambo",
-  },
-};
+const users = {};
 
 //--------------
 // GET ENDPOINTS
@@ -79,7 +57,7 @@ const users = {
 
 // main index page
 app.get('/', (req, res) => {
-  res.redirect('/urls')
+  res.redirect('/urls');
 });
 
 // register page
@@ -88,7 +66,7 @@ app.get('/register', (req, res) => {
     const templateVars = {
       user: users[req.session.user_id],
     };
-    res.render("register", templateVars)
+    res.render("register", templateVars);
   } else {
     res.redirect('/urls');
   }
@@ -100,7 +78,7 @@ app.get('/login', (req, res) => {
     const templateVars = {
       user: users[req.session.user_id],
     };
-    res.render("login", templateVars)
+    res.render("login", templateVars);
   } else {
     res.redirect('/urls');
   }
@@ -113,47 +91,48 @@ app.get('/urls.json', (req, res) => {
 
 // URLs page, renders all existing urls
 app.get("/urls", (req, res) => {
-  const templateVars = { 
+  const templateVars = {
     urls: urlsForUser(req.session.user_id),
     user: users[req.session.user_id],
-   };
-  res.render("urls_index", templateVars)
+  };
+  res.render("urls_index", templateVars);
 });
 
 // new url creation page
 app.get("/urls/new", (req, res) => {
+  // checks for existing session cookie & if none, redirects to login
   if (!users[req.session.user_id]) {
     res.redirect('/login');
   } else {
-  const templateVars = {
-    user: users[req.session.user_id],
+    const templateVars = {
+      user: users[req.session.user_id],
+    };
+    res.render("urls_new", templateVars);
   }
-  res.render("urls_new", templateVars);
-}
 });
 
 // urls_show page for individual URLs, with editor feature
 app.get("/urls/:shortURL", (req, res) => {
-  // allows these objects to be accessible in HTML template
   const url = urlDatabase[req.params.shortURL];
+  // checks to ensure path exists, renders if true
   if (url) {
-    const templateVars = { 
-      shortURL: req.params.shortURL, 
+    const templateVars = {
+      shortURL: req.params.shortURL,
       longURL: (url.fullURL),
       user: users[req.session.user_id],
     };
-      res.render("urls_show", templateVars);
-    } else {
-      res.status(404).send("That URL does not exist!");
-    }
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(404).send("That URL does not exist!");
+  }
 });
 
-// sends link off on its way to the wilderness
+// sends ya link off on its way
 app.get("/u/:shortURL", (req, res) => {
   const url = urlDatabase[req.params.shortURL];
   if (url) {
-    // references value of newly generated key
-    const longURL = urlDatabase[req.params.shortURL].fullURL; 
+    // references value of shortURL
+    const longURL = urlDatabase[req.params.shortURL].fullURL;
     res.redirect(longURL);
   } else {
     res.status(404).send("That URL does not exist!");
@@ -166,18 +145,19 @@ app.get("/u/:shortURL", (req, res) => {
 
 // create a new URL
 app.post("/urls", (req, res) => {
+  // check for session cookie, short circuits if none
   if (!req.session.user_id) {
-    res.status(403).send("Cannot create new URL unless signed in!")
+    res.status(403).send("Cannot create new URL unless signed in!");
   } else {
-      const newString = generateRandomString();
-      // generates a key for an empty object to be placed inside urlDatabase
-      urlDatabase[newString] = {};
-      // assigns the shortURL object's fullURL property the value of the longURL form
-      urlDatabase[newString].fullURL = (req.body.longURL)
-      // assigns the shortURL object the currently signed in user's ID
-      urlDatabase[newString].userId = req.session.user_id
-      res.redirect(`/urls/${newString}`);
-    }
+    const newString = generateRandomString();
+    // generates a key for an empty object to be placed inside urlDatabase
+    urlDatabase[newString] = {};
+    // assigns the shortURL object's fullURL property the value of the longURL form
+    urlDatabase[newString].fullURL = (req.body.longURL);
+    // assigns the shortURL object the currently signed in user's ID
+    urlDatabase[newString].userId = req.session.user_id;
+    res.redirect(`/urls/${newString}`);
+  }
 });
 
 // deletes a url if conditions are met
@@ -190,8 +170,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     // then redirects to main url list page
     res.redirect('/urls');
   } else {
-      res.status(403).send("Cannot delete a URL that isn't your own!")
-    }
+    res.status(403).send("Cannot delete a URL that isn't your own!");
+  }
 });
 
 // edit an existing URL
@@ -204,9 +184,9 @@ app.post("/urls/:shortURL", (req, res) => {
   // replaces database object value with the longurl from the form
   if (signedInUser && signedInUser.id === urlDatabase[req.params.shortURL].userId) {
     urlDatabase[shortURL].fullURL = longURL;
-    res.redirect(`/urls`)
+    res.redirect(`/urls`);
   } else {
-    res.status(403).send("Cannot edit a URL that isn't your own!")
+    res.status(403).send("Cannot edit a URL that isn't your own!");
   }
 });
 
@@ -215,9 +195,9 @@ app.post("/register", (req, res) => {
   const userKey = emailLookup(req.body.email, users);
   const userId = generateRandomString();
   // check if both fields are filled adequately
-  if (req.body.email && req.body.password ) {
+  if (req.body.email && req.body.password) {
     // takes password form body to make a hashed password
-    const hashedPassword = bcrypt.hashSync(req.body.password, 10)
+    const hashedPassword = bcrypt.hashSync(req.body.password, 10);
     // check if account already exists. if not, creates user object
     if (userKey.email !== req.body.email) {
       users[userId] = {
@@ -240,23 +220,24 @@ app.post("/login", (req, res) => {
   const userKey = emailLookup(req.body.email, users);
   if (req.body.email && req.body.password) {
     if (userKey.email === req.body.email) {
-      if (bcrypt.compareSync(req.body.password, userKey.password))/*(userKey.password === req.body.password) OLD*/ {
+      if (bcrypt.compareSync(req.body.password, userKey.password)) {
         req.session.user_id = userKey.id;
         res.redirect('/urls');
       } else {
         res.status(403).send("Incorrect Password.");
       }
     } else {
-      res.status(403).send("That account does not exist!")
+      res.status(403).send("That account does not exist!");
     }
   }
 });
 
 // logout page
 app.post("/logout", (req, res) => {
+  // deletes session cookie
   req.session = null;
   res.redirect('/urls');
-})
+});
 
 //---------------
 // STATUS CHECKER
