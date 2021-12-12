@@ -1,13 +1,13 @@
 function emailLookup(inputEmail, database) {
-  for (const user in database) {
-    if (database[user].email === inputEmail) {
-      return database[user];
+  for (let id in database) {
+    if (database[id].email === inputEmail) {
+      return database[id];
     }
-  } 
+  } return false;
 };
 
-//OLD
-// existing email lookup
+//OLD (works)
+
 // function emailLookup(inputEmail) {
 //   for (const user in users) {
 //     if (users[user].email === inputEmail) {
@@ -17,5 +17,5 @@ function emailLookup(inputEmail, database) {
 // };
 
 module.exports = { 
-  emailLookup 
+  emailLookup,
 }

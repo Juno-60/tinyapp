@@ -6,8 +6,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require("bcryptjs");
-const helpers = require("./helpers");
-const emailLookup = helpers.emailLookup;
+const { emailLookup } = require('./helpers');
 const cookieSession = require('cookie-session');
 app.use(cookieSession({
   name: 'session',
@@ -41,6 +40,7 @@ function urlsForUser(id) {
   } 
   return urlsById;
 }
+
 
 //-----------------
 // DATABASE OBJECTS
@@ -253,8 +253,6 @@ app.post("/register", (req, res) => {
 // login page with checks for username and password
 app.post("/login", (req, res) => {
   const userKey = emailLookup(req.body.email, users);
-  console.log(bcrypt.compareSync(req.body.password, userKey.password));
-  console.log(userKey.password)
   if (req.body.email && req.body.password) {
     if (userKey.email === req.body.email) {
       if (bcrypt.compareSync(req.body.password, userKey.password))/*(userKey.password === req.body.password) OLD*/ {
