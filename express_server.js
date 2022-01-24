@@ -113,6 +113,7 @@ app.get("/urls/new", (req, res) => {
 
 // urls_show page for individual URLs, with editor feature
 app.get("/urls/:shortURL", (req, res) => {
+  // checks for correct account credentials before displaying URL
   const signedInUser = users[req.session.user_id];
   if (signedInUser && signedInUser.id === urlDatabase[req.params.shortURL].userId) {
     const url = urlDatabase[req.params.shortURL];
@@ -128,9 +129,8 @@ app.get("/urls/:shortURL", (req, res) => {
       res.status(404).send("That URL does not exist!");
     }
   } else {
-    res.status(403).send("Cannot view a URL if not account owner!");
+    res.status(403).send("Cannot view a URL if not logged in on the correct account!");
   }
-
 });
 
 // sends ya link off on its way
