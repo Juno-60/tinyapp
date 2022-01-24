@@ -17,19 +17,19 @@ app.use(cookieSession({
 ));
 app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 //-----------------
 // HELPER FUNCTIONS
 //-----------------
 
 // random number generator
-const generateRandomString = function() {
+const generateRandomString = function () {
   return Math.random().toString(36).substr(2, 6);
 };
 
 // returns urls for which the userID is equal to the ID of currently logged in user
-const urlsForUser = function(id) {
+const urlsForUser = function (id) {
   let urlsById = {};
   for (const url in urlDatabase) {
     if (urlDatabase[url].userId === id) {
@@ -113,18 +113,24 @@ app.get("/urls/new", (req, res) => {
 
 // urls_show page for individual URLs, with editor feature
 app.get("/urls/:shortURL", (req, res) => {
-  const url = urlDatabase[req.params.shortURL];
-  // checks to ensure path exists, renders if true
-  if (url) {
-    const templateVars = {
-      shortURL: req.params.shortURL,
-      longURL: (url.fullURL),
-      user: users[req.session.user_id],
-    };
-    res.render("urls_show", templateVars);
+  const signedInUser = users[req.session.user_id];
+  if (signedInUser && signedInUser.id === urlDatabase[req.params.shortURL].userId) {
+    const url = urlDatabase[req.params.shortURL];
+    // checks to ensure path exists, renders if true
+    if (url) {
+      const templateVars = {
+        shortURL: req.params.shortURL,
+        longURL: (url.fullURL),
+        user: users[req.session.user_id],
+      };
+      res.render("urls_show", templateVars);
+    } else {
+      res.status(404).send("That URL does not exist!");
+    }
   } else {
-    res.status(404).send("That URL does not exist!");
+    res.status(403).send("Cannot view a URL if not account owner!");
   }
+
 });
 
 // sends ya link off on its way
